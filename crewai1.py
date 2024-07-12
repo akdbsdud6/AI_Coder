@@ -92,5 +92,5 @@ crew = Crew(
     verbose=2
 )
 
-result = crew.kickoff(inputs={"request": "program that prints 'hello world'"})
+result = crew.kickoff(inputs={"request": "a basic calculator program that can handle basic arithmetic operations"})
 Markdown(result)
