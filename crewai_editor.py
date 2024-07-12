@@ -10,6 +10,11 @@ os.environ["OPENAI_API_KEY"] = OPENAI_API_KEY
 os.environ["GROQ_API_KEY"] = GROQ_API_KEY
 from IPython.display import Markdown
 
+def write_to_file(content, filename):
+    with open(filename, 'w') as file:
+        file.write(content)
+    return filename
+
 chat = ChatOpenAI(model="gpt-3.5-turbo", api_key=OPENAI_API_KEY)
 llama = ChatGroq(model="llama3-70b-8192", api_key=GROQ_API_KEY)
 
@@ -55,7 +60,7 @@ fixer = Agent(
 
 editor = Agent(
     role="Code Editor",
-    goal="Test and Polish the code on this topic: {program_requirements}",
+    goal="Test, Polish, and save the code on this topic: {program_requirements}",
     backstory="""You're testing and editing the Python code provided by Code Fixer. 
     You will make sure the code runs without producing any error.
     You will make sure the code indeed meets all the requirements in {program_requirements}.
@@ -67,7 +72,8 @@ editor = Agent(
     """,
     llm=llama,
     allow_delegation=False,
-    verbose=True
+    verbose=True,
+    function_calling=True
 )
 
 read = Task(
@@ -95,9 +101,11 @@ fix = Task(
 edit = Task(
     description=("""1. If the code fails to satisfy any of the requirements, edit it until it satisfies them all.
         2. If there are imports or variables that are never used, remove them.
+        3. When presenting the final version, start any line of explanation that isn't "code" with a # symbol so it becomes a comment.
+        4. Don't wrap up the final version of code with ''', just present it straight
         """
     ),
-    expected_output="""A final version of Python code that satisfies all specified requirements and produces 0 errors.""",
+    expected_output="""The filename of a python code that contains the final version of Python code that satisfies all specified requirements and produces 0 errors.""",
     agent=editor
 )
 
@@ -113,6 +121,14 @@ result = crew.kickoff(
         "location":"example_code.py",
         "program_requirements":"""1. Have user interface GUI
         2. A basic calculator that can handle addition, subtraction, multiplication, division of many digits
-        3. Code should be readable to human"""
+        3. Code should be readable to human""",
+        "output_file":"code_output.py"
     })
-Markdown(result)
+
+output_file = "code_output.py"
+with open(output_file, 'w') as file:
+    file.write(result)
+
+print(f"The improved code has been saved to: {output_file}")
+
+#Markdown(result)
